@@ -64,9 +64,8 @@ export class Parser {
         left: null,
         right: rvalue,
       };
-    } else {
-      return this.expr();
     }
+    return this.expr();
   }
 
   public expr(): IAst {
@@ -81,9 +80,8 @@ export class Parser {
         left: lvalue,
         right: rvalue,
       };
-    } else {
-      throw new SyntaxError('Assignement token is expected like =>,<=>,=,?');
     }
+    throw new SyntaxError('Assignement token is expected like =>,<=>,=,?');
   }
 
   private xorop(): IAst {
@@ -97,9 +95,8 @@ export class Parser {
         left: lvalue,
         right: rvalue,
       };
-    } else {
-      return lvalue;
     }
+    return lvalue;
   }
 
   private orop(): IAst {
@@ -113,9 +110,8 @@ export class Parser {
         left: lvalue,
         right: rvalue,
       };
-    } else {
-      return lvalue;
     }
+    return lvalue;
   }
 
   private andop(): IAst {
@@ -129,9 +125,8 @@ export class Parser {
         left: lvalue,
         right: rvalue,
       };
-    } else {
-      return lvalue;
     }
+    return lvalue;
   }
 
   private notop(): IAst {
@@ -143,9 +138,8 @@ export class Parser {
         left: null,
         right: rvalue,
       };
-    } else {
-      return this.atom();
     }
+    return this.atom();
   }
 
   private atom(): IAst {
@@ -165,9 +159,8 @@ export class Parser {
       if (!this.match(this.typeTab.PC)) {
         throw new SyntaxError(`')' expected at column ${this.current + 1}`);
       }
-    } else {
-      throw new SyntaxError(`'${this.getToken}' is unknown at column ${this.current + 1}`);
     }
+    throw new SyntaxError(`'${this.getToken}' is unknown at column ${this.current + 1}`);
   }
 
   private univar(): IAst {
@@ -180,8 +173,7 @@ export class Parser {
       };
     } else if (!this.value || this.value === 'EOL') {
       return null;
-    } else {
-      throw new SyntaxError(`'${this.getToken}' is unknown at column ${this.current + 1}`);
     }
+    throw new SyntaxError(`'${this.getToken}' is unknown at column ${this.current + 1}`);
   }
 }
