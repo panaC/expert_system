@@ -18,6 +18,7 @@ export class Parser {
 
   private current = 0;
   private value = '';
+  private pvalue = '';
 
   private typeTab: IType = {
     INP: RegExp(/\=|\?/),
@@ -38,6 +39,7 @@ export class Parser {
   }
 
   private getNextToken() {
+    this.pvalue = this.value;
     if (this.current === this.tokens.length) {
       this.value = 'EOL';
     } else {
@@ -171,23 +173,15 @@ export class Parser {
   }
 
   private univar(): IAst {
-    if (!this.value) {
+    if (this.match(this.typeTab.VAR)) {
+      return {
+        type: 'VAR',
+        value: this.pvalue,
+        left: null,
+        right: this.univar(),
+      };
+    } else if (!this.value || this.value === 'EOL') {
       return null;
-    }
-    if (this.typeTab.VAR.test(this.getToken)) {
-      const val = this.getToken;
-      if (this.match(this.typeTab.VAR)) {
-        return {
-          type: 'VAR',
-          value: val,
-          left: null,
-          right: this.univar(),
-        };
-      } else if (this.value === 'EOL') {
-        return null;
-      } else {
-        throw new SyntaxError(`'${this.getToken}' is unknown at column ${this.current + 1}`);
-      }
     } else {
       throw new SyntaxError(`'${this.getToken}' is unknown at column ${this.current + 1}`);
     }
