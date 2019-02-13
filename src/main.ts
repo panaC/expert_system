@@ -17,7 +17,7 @@ if (typeof require !== 'undefined' && require.main === module) {
     const lexer = new Lexer(process.argv[2]);
     lexer.out.forEach(element => {
       const parser = new Parser(element);
-      const ast = parser.parse();
+      console.log(parser.parse());
     });
   } catch (e) {
     console.error(e);

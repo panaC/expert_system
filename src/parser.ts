@@ -3,7 +3,7 @@ interface IType {
   [name: string]: RegExp;
 }
 
-interface IAst {
+export interface IAst {
   type: string;
   value: string;
   left: IAst;
