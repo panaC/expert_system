@@ -32,8 +32,6 @@ export class Parser {
     VAR: RegExp(/[A-Z]/),
   };
 
-  private ast: IAst = null;
-
   private get getToken() {
     return this.value;
   }

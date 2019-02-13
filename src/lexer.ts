@@ -1,4 +1,3 @@
-import { Ast } from './old_ast';
 import { Rules } from './rules';
 import { Queries } from './queries';
 import { Facts } from './facts';
