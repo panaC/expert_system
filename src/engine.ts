@@ -133,6 +133,7 @@ export class Engine {
           }
         });
         this.facts.forEach((fact) => {
+          this.dfs = {};
           this.run(fact);
         });
       }
@@ -169,6 +170,7 @@ export class Engine {
     if (this.graph[str].length === 0 || this.graph[str].map((n) => this.dfs[n]).reduce((a, c) => a && c)) {
       return ;
     }
+    this.dfs[str] = true;
     if (this.node[str].type !== 'VAR') {
       this.node[str].state.out = this.node[str].state.in
       .reduce((a, c) => {
