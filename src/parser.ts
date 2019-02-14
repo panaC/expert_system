@@ -20,7 +20,7 @@ export class Parser {
   private value = '';
   private pvalue = '';
 
-  private typeTab: IType = {
+  public static typeTab: IType = {
     INP: RegExp(/\=|\?/),
     ASS: RegExp(/=>|<=>/),
     XOR: RegExp(/\^|xor|XOR/),
@@ -55,7 +55,7 @@ export class Parser {
   }
 
   public parse(): IAst {
-    if (this.match(this.typeTab.INP)) {
+    if (this.match(Parser.typeTab.INP)) {
       const val = this.tokens[this.current - 1];
       const rvalue = this.univar();
       return {
@@ -71,7 +71,7 @@ export class Parser {
   public expr(): IAst {
     const lvalue = this.xorop();
 
-    if (this.match(this.typeTab.ASS)) {
+    if (this.match(Parser.typeTab.ASS)) {
       const val = this.tokens[this.current - 1];
       const rvalue = this.xorop();
       return {
@@ -87,7 +87,7 @@ export class Parser {
   private xorop(): IAst {
     const lvalue = this.orop();
 
-    if (this.match(this.typeTab.XOR)) {
+    if (this.match(Parser.typeTab.XOR)) {
       const rvalue = this.xorop();
       return {
         type: 'XOR',
@@ -102,7 +102,7 @@ export class Parser {
   private orop(): IAst {
     const lvalue = this.andop();
 
-    if (this.match(this.typeTab.OR)) {
+    if (this.match(Parser.typeTab.OR)) {
       const rvalue = this.orop();
       return {
         type: 'OR',
@@ -117,7 +117,7 @@ export class Parser {
   private andop(): IAst {
     const lvalue = this.notop();
 
-    if (this.match(this.typeTab.AND)) {
+    if (this.match(Parser.typeTab.AND)) {
       const rvalue = this.andop();
       return {
         type: 'AND',
@@ -130,7 +130,7 @@ export class Parser {
   }
 
   private notop(): IAst {
-    if (this.match(this.typeTab.NOT)) {
+    if (this.match(Parser.typeTab.NOT)) {
       const rvalue = this.notop();
       return {
         type: 'NOT',
@@ -147,16 +147,16 @@ export class Parser {
     if (this.value === 'EOL') {
       // fin du parsing;
     }
-    if (this.match(this.typeTab.VAR)) {
+    if (this.match(Parser.typeTab.VAR)) {
       return {
         type: 'VAR',
         value: val,
         left: null,
         right: null,
       };
-    } else if (this.match(this.typeTab.PO)) {
+    } else if (this.match(Parser.typeTab.PO)) {
       this.xorop();
-      if (!this.match(this.typeTab.PC)) {
+      if (!this.match(Parser.typeTab.PC)) {
         throw new SyntaxError(`')' expected at column ${this.current + 1}`);
       }
     }
@@ -164,7 +164,7 @@ export class Parser {
   }
 
   private univar(): IAst {
-    if (this.match(this.typeTab.VAR)) {
+    if (this.match(Parser.typeTab.VAR)) {
       return {
         type: 'VAR',
         value: this.pvalue,
