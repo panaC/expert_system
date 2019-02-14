@@ -1,3 +1,4 @@
+import { Engine } from './engine';
 import { Parser } from './parser';
 import { Lexer } from './lexer';
 /* ************************************************************************** */
@@ -15,9 +16,12 @@ import { Lexer } from './lexer';
 if (typeof require !== 'undefined' && require.main === module) {
   try {
     const lexer = new Lexer(process.argv[2]);
+    const engine = new Engine();
     lexer.out.forEach(element => {
       const parser = new Parser(element);
-      console.log(parser.parse());
+      const ast = parser.parse();
+      console.log(ast);
+      engine.add(ast);
     });
   } catch (e) {
     console.error(e);

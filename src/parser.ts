@@ -168,8 +168,8 @@ export class Parser {
       return {
         type: 'VAR',
         value: this.pvalue,
-        left: null,
-        right: this.univar(),
+        left: this.univar(),
+        right: null,
       };
     } else if (!this.value || this.value === 'EOL') {
       return null;
