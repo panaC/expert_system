@@ -1,4 +1,5 @@
-import { IAst } from './parser';
+import { Facts } from './facts';
+import { IAst, Parser } from './parser';
 import { createHash } from 'crypto';
 
 interface Iname {
@@ -73,6 +74,9 @@ export class Engine {
   }
 
   private setGraph(ast: IAst, pid: string = null) {
+    if (ast === null) {
+      return ;
+    }
     if (pid === null && ast.type === 'ASS') {
       this.setGraph(ast.right, (ast.value === '<=>') ? Engine.nodeName(ast.left) : Engine.nodeName(ast.right));
       this.setGraph(ast.left, Engine.nodeName(ast.right));
@@ -84,7 +88,7 @@ export class Engine {
         type: ast.type,
         value: ast.value,
         state: {
-          out: Estate.undef,
+          out: (ast.type === 'VAR' ? Estate.false : Estate.undef),
           in: Engine.initIn(pid, ast.type),
         },
       };
@@ -93,12 +97,12 @@ export class Engine {
       if (!this.graph[name]) {
         this.graph[name] = [];
       }
-      this.graph[name].push(pid);
+      if (this.graph[name].findIndex((n) => n === pid) === -1 && name !== pid) {
+        this.graph[name].push(pid);
+      }
     }
-    if (ast.left !== null && ast.right !== null) {
-      this.setGraph(ast.left, name);
-      this.setGraph(ast.right, name);
-    }
+    this.setGraph(ast.left, name);
+    this.setGraph(ast.right, name);
   }
 
   private astToArrayVar(ast: IAst, array: string[]) {
@@ -108,9 +112,9 @@ export class Engine {
       if (ast.type === 'VAR') {
         if (this.node[ast.value]) {
           array.push(ast.value);
-        } else {
+        } /*else {
           throw new Error(`'${ast.value}' is unknown in Variable set`);
-        }
+        }*/
       }
     }
   }
@@ -120,15 +124,25 @@ export class Engine {
       // add facts or rules
       if (ast.value === '?') {
         this.astToArrayVar(ast, this.queries);
-        this.queries.forEach((querie) => {
-          // do something with this variable found its state
-          this.facts.forEach((fact) => {
-            console.log(fact);
+        Object.keys(this.graph).forEach((fact) => {
+          if (Parser.typeTab.VAR.test(fact) && this.queries.findIndex((n) => fact === n) === -1) {
+            console.log(`Run ${fact}`);
             this.dfs = {};
             this.run(fact);
-          });
+          }
+        });
+        /*this.facts.map((fact) => {
+            this.dfs = {};
+            this.run(fact);
+        });*/
+        this.queries.forEach((querie) => {
+          // do something with this variable found its state
           if (this.node[querie]) {
-            console.log(`'${querie}' type is '${this.node[querie].state.out}'`);
+            let state = this.node[querie].state.out;
+            if (state === Estate.undef) {
+              state = Estate.false;
+            }
+            console.log(`'${querie}' type is '${state}'`);
           } else {
             console.log(`'${querie} is unknown in variable set`);
           }
@@ -140,13 +154,16 @@ export class Engine {
         this.astToArrayVar(ast, this.facts);
         this.facts.forEach((element) => {
           if (this.node[element]) {
-            this.node[element].state.in.push({ name: 'init', state: Estate.true});
+            this.node[element].state.out = Estate.true;
+            this.node[element].state.in.push({ name: 'init', state: Estate.true });
           }
         });
       }
     } else {
       this.setGraph(ast);
     }
+
+    
     console.log('Node:');
     console.log(this.node);
     console.log('Graph:');
@@ -155,19 +172,22 @@ export class Engine {
     console.log(this.facts);
     console.log('queries:');
     console.log(this.queries);
+    
   }
 
   private static op(acc: Estate, type: string, sta: Estate) {
-    if (acc === Estate.undef || sta === Estate.undef) {
-      return Estate.undef;
+    if (acc === Estate.undef) {
+      return (type === 'NOT' ? (sta === Estate.true ? Estate.false : Estate.true) : sta);
     }
     const l = acc === Estate.true ? true : false;
     const r = sta === Estate.true ? true : false;
     let ret: boolean = false;
+    console.log('HELLO', type);
+    
 
     switch (type) {
       case 'XOR':
-        const xor = (a: boolean, b: boolean) => ( a || b ) && !( a && b );
+        const xor = (a: boolean, b: boolean) => (a || b) && !(a && b);
         ret = xor(l, r);
         break;
       case 'OR':
@@ -177,10 +197,13 @@ export class Engine {
         ret = l && r;
         break;
       case 'NOT':
-        ret = !r;
+        ret = !(l || r);
+        console.log('HELLO NOT', ret);
+        
         break;
       case 'VAR':
         ret = l || r;
+        console.log('HELLO VAR', ret);
         break;
     }
     return (ret === true ? Estate.true : Estate.false);
@@ -188,27 +211,49 @@ export class Engine {
 
   private run(str: string) {
     // exec pathfinding from str var in graph
-    if (this.graph[str] === undefined || (this.graph[str].length === 0 || this.graph[str].map((n) => this.dfs[n]).reduce((a, c) => a && c))) {
+    /*if (this.graph[str] === undefined || (this.graph[str].length === 0 || this.graph[str].map((n) => this.dfs[n]).reduce((a, c) => a && c))) {
       return ;
-    }
+    }*/
+
+    console.log('RUN', str);
+    
     this.dfs[str] = true;
     // if (this.node[str].type !== 'VAR') {
-    this.node[str].state.out = this.node[str].state.in
-    .reduce((a, c) => {
-      return { name: '', state: Engine.op(a.state, this.node[str].type, c.state)};
-    }).state;
-    this.graph[str].map((n) => {
-      const index = this.node[n].state.in.findIndex((v) => v.name === str);
-      if (index > -1) {
-        this.node[n].state.in[index].state = this.node[str].state.out;
-      } else {
-        this.node[n].state.in.push({name: str, state: this.node[str].state.out});
-      }
-    });
+    try {
+      this.node[str].state.out = this.node[str].state.in
+      .reduce((a, c) => {
+        console.log('RUN', str);
+        return { name: '', state: Engine.op(a.state, this.node[str].type, c.state) };
+      }, /* ici il doit y avoir une valeur d'initialisation mais false or true influe*/{ name: '', state: Estate.undef }).state;
+    } catch (e) {
+      console.log(`run 1 ${str}`);
+    }
+    try {
+      this.graph[str].map((n) => {
+        const index = this.node[n].state.in.findIndex((v) => v.name === str);
+        if (index > -1) {
+          this.node[n].state.in[index].state = this.node[str].state.out;
+        } else {
+          this.node[n].state.in.push({ name: str, state: this.node[str].state.out });
+        }
+      });
+    } catch (e) {
+      console.log(`run ${str}`);
+    }
     /*} else {
       this.graph[str].map((n) => this.node[n].state.in.push({name: str, state: this.node[str].state.out}));
       this.graph[str].map((n) => this.node[n].state.out);
     }*/
-    this.graph[str].map((n) => this.run(n));
+    try {
+      this.graph[str].map((n) => {
+        if (!this.dfs[n]) {
+          this.run(n);
+        }
+      });
+    } catch (e) {
+      console.log(`run ${str}`);
+    }
+    /*} else {
+      */
   }
 }

@@ -29,7 +29,7 @@ export class Parser {
     NOT: RegExp(/\!|not|NOT/),
     PO: RegExp(/\(/),
     PC: RegExp(/\)/),
-    VAR: RegExp(/[A-Z]/),
+    VAR: RegExp(/[A-Z]$/),
   };
 
   private get getToken() {
@@ -155,10 +155,11 @@ export class Parser {
         right: null,
       };
     } else if (this.match(Parser.typeTab.PO)) {
-      this.xorop();
+      const ast = this.xorop();
       if (!this.match(Parser.typeTab.PC)) {
         throw new SyntaxError(`')' expected at column ${this.current + 1}`);
       }
+      return ast;
     }
     throw new SyntaxError(`'${this.getToken}' is unknown at column ${this.current + 1}`);
   }
